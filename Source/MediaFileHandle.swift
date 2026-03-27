@@ -70,8 +70,12 @@ extension MediaFileHandle {
 
         guard let writeHandle = writeHandle else { return }
 
-        writeHandle.seekToEndOfFile()
-        writeHandle.write(data)
+        do {
+            writeHandle.seekToEndOfFile()
+            try writeHandle.write(contentsOf: data)
+        } catch {
+            AppLogger.error("Write failed at \(filePath) with error: \(error)")
+        }
     }
 
     func synchronize() {
@@ -80,7 +84,7 @@ extension MediaFileHandle {
 
         guard let writeHandle = writeHandle else { return }
 
-        writeHandle.synchronizeFile()
+        try? writeHandle.synchronize()
     }
 
     func close() {
