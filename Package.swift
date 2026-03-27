@@ -1,4 +1,4 @@
-// swift-tools-version: 5.6
+// swift-tools-version: 5.9
 
 import PackageDescription
 
@@ -6,7 +6,7 @@ let package = Package(
     name: "CachingPlayerItem",
     defaultLocalization: "en",
     platforms: [
-        .iOS(.v10),
+        .iOS(.v17),
     ],
     products: [
         .library(name: "CachingPlayerItem", targets: ["CachingPlayerItem"]),
