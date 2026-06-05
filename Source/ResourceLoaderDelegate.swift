@@ -175,8 +175,20 @@ final class ResourceLoaderDelegate: NSObject, AVAssetResourceLoaderDelegate, URL
     }
 
     func invalidateAndCancelSession(shouldResetData: Bool = true) {
-        session?.invalidateAndCancel()
+        // The resource-loader delegate callbacks run on the main queue
+        // (`asset.resourceLoader.setDelegate(_, queue: .main)`), and they create
+        // URLSession tasks on `session`. This method can be called off the main
+        // thread (e.g. from `CachingPlayerItem.deinit`, which runs on whichever
+        // thread releases the last reference), so invalidating inline races with an
+        // in-flight `shouldWaitForLoadingOfRequestedResource` that's about to call
+        // `session.dataTask(...)` — crashing with NSGenericException "Task created
+        // in a session that has been invalidated". Hop the invalidation onto the
+        // main queue so it serializes with those callbacks: a callback already in
+        // flight creates its task on the still-valid session (then this cancels it),
+        // and any later callback sees `session == nil` and recreates.
+        let sessionToInvalidate = session
         session = nil
+        DispatchQueue.main.async { sessionToInvalidate?.invalidateAndCancel() }
         operationQueue.cancelAllOperations()
 
         if shouldResetData {
